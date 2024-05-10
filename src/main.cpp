@@ -49,12 +49,14 @@ int main()
 
 	std::deque<sSymbols> sHolding;
 	std::deque<sSymbols>sOutput;
+	typedef
+	sSymbols::Type		sT;
 
 	for (const auto c : expression)
 	{
 		// Push literals straight to output, They are already in order
 		if(c >= '0' && c <= '9')
-		  sOutput.push_back({std::string(1, c ), sSymbols::Type::LiteralNumeric});
+		  sOutput.push_back({std::string(1, c ), sT::LiteralNumeric});
 		else if(mapOps.find(c) != mapOps.end())
 		{
 			// Symbol is operator
@@ -63,7 +65,7 @@ int main()
 			while (!sHolding.empty())
 			{
 				// Ensure holding stack front is an operator (it might not be later...)
-				if (sHolding.front().type == sSymbols::Type::Opeartor)
+				if (sHolding.front().type == sT::Opeartor)
 				{
 					const auto& holding_stack_op = sHolding.front().op;
 
@@ -77,7 +79,12 @@ int main()
 				}
 			}
 			// Push the new operator onto the holding stack
-			sHolding.push_back({std::string(1,c),sSymbols::Type::Opeartor ,new_op});
+			sHolding.push_back({std::string(1,c),sT::Opeartor ,new_op});
+		}
+		else
+		{
+			std::cout << "Bad symbol: " << std::string(1, c) << "\n";
+			return 0;
 		}
 	}
 
@@ -86,6 +93,74 @@ int main()
 		sOutput.push_back(sHolding.front());
 		sHolding.pop_front();
 	}
+
+	std::cout << "Expression:= " << expression << "\n";
+	std::cout << "RPN       := ";
+	for (const auto& s : sOutput)
+	{
+		std::cout << s.symbol;
+	}
+	std::cout << "\n";
+
+	// Solver
+	std::deque<double> Solver;
+
+	for (const auto& inst : sOutput)
+	{
+		switch (inst.type)
+		{
+		case sT::Unknwown:
+
+		break;
+		
+		case sT::Opeartor:
+		{
+			std::vector<double> mem(inst.op.arguments);	
+			for (uint8_t i = 0; i < inst.op.arguments; i++)
+			{
+				if (!Solver.empty())
+				{
+					mem[i] = Solver[0];
+					Solver.pop_front();
+				}
+				else {
+					std::cout << "!!!				ERROR!  BAD Expression\n";
+				}
+			}
+
+			double result{ 0.0 };
+
+			if (inst.op.arguments == 2)
+			{
+				switch (inst.symbol[0])
+				{
+				case '/':
+					result = mem[1] / mem[0];
+					break;
+				case '*':
+					result = mem[1] * mem[0];
+					break;
+				case '+':
+					result = mem[1] + mem[0];
+					break;
+				case '-':
+					result = mem[1] - mem[0];
+					break;
+				}
+			}
+			Solver.push_front(result);
+		}
+		break;
+
+		case sT::LiteralNumeric:
+			Solver.push_front(std::stod(inst.symbol));
+			break;
+		default:
+			std::cout << "Incorrect type!!\n";
+		}
+	}
+
+	std::cout << "Result	:=" << Solver[0] << "\n";
 
 	std::cin.get();
 }
