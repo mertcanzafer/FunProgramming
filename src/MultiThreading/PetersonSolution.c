@@ -4,7 +4,7 @@
 #include <pthread.h>
 // Race Condition
 //  Loop:
-    // #1000000,r0
+    // mov #1000000,r0
     // load mail ,r1
     // Context - switch --> if Threads are switched!!!!
     // add #1, r1
